@@ -2,17 +2,100 @@
 	"variables": [],
 	"info": {
 		"name": "FDSN",
-		"_postman_id": "8028caf7-95bb-7842-f3a5-65ec665508e8",
+		"_postman_id": "b7850e2c-f1d0-2f2f-2d93-2d0637ca3b98",
 		"description": "New Beta Calls",
 		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
 	},
 	"item": [
 		{
-			"name": "Station Request",
+			"name": "Event",
 			"description": "",
 			"item": [
 				{
-					"name": "http://beta-service.geonet.org.nz/fdsnws/station/1/query?station=ARAZ",
+					"name": "Event Time and Date",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonObject = xml2Json(responseBody);",
+									"",
+									"console.log(JSON.stringify(jsonObject));",
+									"",
+									"// The reason to hate XML?",
+									"console.log(\"publicId:\" + jsonObject['q:quakeml'].eventParameters.event[0]['$'].publicID)",
+									"",
+									"tests['Events returned from query'] = jsonObject['q:quakeml'].eventParameters.event.length === 2;"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": {
+							"raw": "http://beta-service.geonet.org.nz/fdsnws/event/1/query?starttime=2016-11-19T11:00:00.000&endtime=2016-11-20T11:00:00.000&longitude=173.02&latitude=-42.69&minmagnitude=5",
+							"protocol": "http",
+							"host": [
+								"beta-service",
+								"geonet",
+								"org",
+								"nz"
+							],
+							"path": [
+								"fdsnws",
+								"event",
+								"1",
+								"query"
+							],
+							"query": [
+								{
+									"key": "starttime",
+									"value": "2016-11-19T11:00:00.000",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "endtime",
+									"value": "2016-11-20T11:00:00.000",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "longitude",
+									"value": "173.02",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "latitude",
+									"value": "-42.69",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "minmagnitude",
+									"value": "5",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "GET",
+						"header": [],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Station",
+			"description": "",
+			"item": [
+				{
+					"name": "Station Detailed",
 					"event": [
 						{
 							"listen": "test",
@@ -63,7 +146,10 @@
 						},
 						"method": "GET",
 						"header": [],
-						"body": {},
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
 						"description": "Get detailed repsonse for station ARAZ"
 					},
 					"response": []
