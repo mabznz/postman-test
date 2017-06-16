@@ -2,8 +2,8 @@
 	"variables": [],
 	"info": {
 		"name": "FDSN",
-		"_postman_id": "b7850e2c-f1d0-2f2f-2d93-2d0637ca3b98",
-		"description": "New Beta Calls",
+		"_postman_id": "21c1820f-f897-a9c5-f3af-76edb1e9ec92",
+		"description": "Tests",
 		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
 	},
 	"item": [
@@ -21,8 +21,6 @@
 								"exec": [
 									"var jsonObject = xml2Json(responseBody);",
 									"",
-									"console.log(JSON.stringify(jsonObject));",
-									"",
 									"// The reason to hate XML?",
 									"console.log(\"publicId:\" + jsonObject['q:quakeml'].eventParameters.event[0]['$'].publicID)",
 									"",
@@ -33,13 +31,9 @@
 					],
 					"request": {
 						"url": {
-							"raw": "http://beta-service.geonet.org.nz/fdsnws/event/1/query?starttime=2016-11-19T11:00:00.000&endtime=2016-11-20T11:00:00.000&longitude=173.02&latitude=-42.69&minmagnitude=5",
-							"protocol": "http",
+							"raw": "{{fdsn_url}}/fdsnws/event/1/query?starttime=2016-11-19T11:00:00.000&endtime=2016-11-20T11:00:00.000&longitude=173.02&latitude=-42.69&minmagnitude=5",
 							"host": [
-								"beta-service",
-								"geonet",
-								"org",
-								"nz"
+								"{{fdsn_url}}"
 							],
 							"path": [
 								"fdsnws",
@@ -114,13 +108,9 @@
 					],
 					"request": {
 						"url": {
-							"raw": "http://beta-service.geonet.org.nz/fdsnws/station/1/query?station=ARAZ&level=response",
-							"protocol": "http",
+							"raw": "{{fdsn_url}}/fdsnws/station/1/query?station=ARAZ&level=response",
 							"host": [
-								"beta-service",
-								"geonet",
-								"org",
-								"nz"
+								"{{fdsn_url}}"
 							],
 							"path": [
 								"fdsnws",

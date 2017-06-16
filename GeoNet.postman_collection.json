@@ -2,7 +2,7 @@
 	"variables": [],
 	"info": {
 		"name": "GeoNet",
-		"_postman_id": "ac53ccff-521a-cca5-74b2-9f1be9d483a8",
+		"_postman_id": "bc206d46-a526-9d32-f2ac-78dd17a9a511",
 		"description": "",
 		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
 	},
@@ -29,13 +29,9 @@
 					],
 					"request": {
 						"url": {
-							"raw": "http://api.geonet.org.nz/intensity?type=measured",
-							"protocol": "http",
+							"raw": "{{api_url}}/intensity?type=measured",
 							"host": [
-								"api",
-								"geonet",
-								"org",
-								"nz"
+								"{{api_url}}"
 							],
 							"path": [
 								"intensity"
@@ -76,7 +72,7 @@
 						}
 					],
 					"request": {
-						"url": "http://api.geonet.org.nz/quake/2014p715167",
+						"url": "{{api_url}}/quake/2014p715167",
 						"method": "GET",
 						"header": [],
 						"body": {},

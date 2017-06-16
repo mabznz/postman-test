@@ -1,0 +1,24 @@
+{
+  "name": "geonet_tests",
+  "version": "1.0.0",
+  "description": "Testing",
+  "main": "index.js",
+  "scripts": {
+    "beta-tests": "newman -c FDSN.postman_collection.json -e beta.postman_environment.json",
+    "local-tests": "newman -c FDSN.postman_collection.json -e localhost.postman_environment.json",
+    "prod-tests": "newman -c FDSN.postman_collection.json -e prod.postman_environment.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mabznz/postman-test.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mabznz/postman-test/issues"
+  },
+  "homepage": "https://github.com/mabznz/postman-test#readme",
+  "devDependencies": {
+    "newman": "^2.0.5"
+  }
+}
