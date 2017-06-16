@@ -1,0 +1,74 @@
+{
+	"variables": [],
+	"info": {
+		"name": "FDSN",
+		"_postman_id": "8028caf7-95bb-7842-f3a5-65ec665508e8",
+		"description": "New Beta Calls",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Station Request",
+			"description": "",
+			"item": [
+				{
+					"name": "http://beta-service.geonet.org.nz/fdsnws/station/1/query?station=ARAZ",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonObject = xml2Json(responseBody);",
+									"var station = jsonObject.FDSNStationXML.Network.Station;",
+									"//tests[\"Source data\"] = jsonObject.FDSNStationXML.Source === \"GeoNet\";",
+									"",
+									"tests['Test Station Code'] = station['$'].code === 'ARAZ';",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"url": {
+							"raw": "http://beta-service.geonet.org.nz/fdsnws/station/1/query?station=ARAZ&level=response",
+							"protocol": "http",
+							"host": [
+								"beta-service",
+								"geonet",
+								"org",
+								"nz"
+							],
+							"path": [
+								"fdsnws",
+								"station",
+								"1",
+								"query"
+							],
+							"query": [
+								{
+									"key": "station",
+									"value": "ARAZ",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "level",
+									"value": "response",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "GET",
+						"header": [],
+						"body": {},
+						"description": "Get detailed repsonse for station ARAZ"
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

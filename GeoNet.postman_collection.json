@@ -1,0 +1,90 @@
+{
+	"variables": [],
+	"info": {
+		"name": "GeoNet",
+		"_postman_id": "ac53ccff-521a-cca5-74b2-9f1be9d483a8",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "API",
+			"description": "",
+			"item": [
+				{
+					"name": "Intensity",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"tests[\"Response time is less than 200ms\"] = responseTime < 200;",
+									"tests[\"Status code is 200\"] = responseCode.code === 200;"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": {
+							"raw": "http://api.geonet.org.nz/intensity?type=measured",
+							"protocol": "http",
+							"host": [
+								"api",
+								"geonet",
+								"org",
+								"nz"
+							],
+							"path": [
+								"intensity"
+							],
+							"query": [
+								{
+									"key": "type",
+									"value": "measured",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "GET",
+						"header": [],
+						"body": {},
+						"description": "Intensity Test"
+					},
+					"response": []
+				},
+				{
+					"name": "Quake - Specefic Public ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"feature = jsonData.features[0];",
+									"",
+									"console.log('feature:' + feature.geometry.coordinates[0]);",
+									"tests['Check longitude point co-ordinates'] = feature.geometry.coordinates[0] === 175.9324277;",
+									"tests['Check latitude point co-ordinates'] = feature.geometry.coordinates[1] === -40.54048904; "
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "http://api.geonet.org.nz/quake/2014p715167",
+						"method": "GET",
+						"header": [],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
