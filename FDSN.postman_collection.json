@@ -3,7 +3,7 @@
 	"info": {
 		"name": "FDSN",
 		"_postman_id": "21c1820f-f897-a9c5-f3af-76edb1e9ec92",
-		"description": "Tests",
+		"description": "Test:\n\nStation uses XML produced out of delta for 5 stations created by:\n\ncd ~/src/github.com/GeoNet/delta/tools/stationxml\n./stationxml -stations=\"^(ARAZ|ARHZ|TSZ|OPSS|GBIT)$\" > ~/src/github.com/GeoNet/fdsn/cmd/fdsn-ws/etc/fdsn-station-test.xml\n\nThis will hopefully go onto staging.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
 	},
 	"item": [
@@ -12,7 +12,7 @@
 			"description": "",
 			"item": [
 				{
-					"name": "Event Time and Date",
+					"name": "Event request to return multiple events based on parameters",
 					"event": [
 						{
 							"listen": "test",
@@ -21,9 +21,9 @@
 								"exec": [
 									"var jsonObject = xml2Json(responseBody);",
 									"",
-									"// The reason to hate XML?",
-									"console.log(\"publicId:\" + jsonObject['q:quakeml'].eventParameters.event[0]['$'].publicID)",
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
 									"",
+									"// The reason to hate XML?",
 									"tests['Events returned from query'] = jsonObject['q:quakeml'].eventParameters.event.length === 2;"
 								]
 							}
@@ -78,6 +78,56 @@
 						"method": "GET",
 						"header": [],
 						"body": {},
+						"description": "Need known input"
+					},
+					"response": []
+				},
+				{
+					"name": "Event high level response check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonObject = xml2Json(responseBody);",
+									"",
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"// The reason to hate XML?",
+									"var e = jsonObject['q:quakeml'].eventParameters.event;",
+									"",
+									"tests['Event Public ID'] = e.$.publicID === \"smi:nz.org.geonet/2016p875481\";",
+									"tests['Event Public ID'] = e.$.publicID === \"smi:nz.org.geonet/2016p875481\";"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": {
+							"raw": "{{fdsn_url}}/fdsnws/event/1/query?eventId=2016p875481",
+							"host": [
+								"{{fdsn_url}}"
+							],
+							"path": [
+								"fdsnws",
+								"event",
+								"1",
+								"query"
+							],
+							"query": [
+								{
+									"key": "eventId",
+									"value": "2016p875481",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "GET",
+						"header": [],
+						"body": {},
 						"description": ""
 					},
 					"response": []
@@ -86,10 +136,10 @@
 		},
 		{
 			"name": "Station",
-			"description": "",
+			"description": "These tests are for running with know data. Would be good to get this known data saved to master.\n\n./stationxml -stations=\"^(ARAZ|ARHZ|TSZ|OPSS|GBIT)$\" > ~/src/github.com/GeoNet/fdsn/cmd/fdsn-ws/etc/fdsn-station-test.xml",
 			"item": [
 				{
-					"name": "Station Detailed",
+					"name": "Seismic Station specific channel request by starttime",
 					"event": [
 						{
 							"listen": "test",
@@ -98,17 +148,98 @@
 								"exec": [
 									"var jsonObject = xml2Json(responseBody);",
 									"var station = jsonObject.FDSNStationXML.Network.Station;",
-									"//tests[\"Source data\"] = jsonObject.FDSNStationXML.Source === \"GeoNet\";",
+									"//console.log(JSON.stringify(station));",
+									"//console.log(station);",
 									"",
-									"tests['Test Station Code'] = station['$'].code === 'ARAZ';",
-									""
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"// Test station meta data",
+									"tests['Station Code'] = station.$.code === 'ARHZ';",
+									"",
+									"// Test Channel returned. There should only be one. The current one",
+									"tests[\"Check only one channel is returned\"] = typeof(station.Channel) === 'object';",
+									"",
+									"var channel = station.Channel;",
+									"",
+									"tests['Channel Code'] = channel.$.code === 'EHE';",
+									"tests['Channel Start Date'] = new Date(channel.$.startDate).getTime() === new Date(\"2012-01-19T22:30:01\").getTime();",
+									"tests['Channel Location Code'] = channel.$.locationCode === \"10\";",
+									"tests['Channel Azimuth'] = channel.Azimuth === \"90\";",
+									"tests['Channel Depth'] = channel.Depth === \"0\";",
+									"tests['Channel Dip'] = channel.Dip === \"0\";",
+									"",
+									"// Loosley test channel comments",
+									"tests['Channel number of Comments for Channel'] = channel.Comment.length = 3;",
+									"channel.Comment.forEach(function(x, i) {",
+									"    tests['Channel Comment for Channel ' + channel.Comment[i].Value ] = true === /Location|Sensor/.test( channel.Comment[i].Value );",
+									"});",
+									"",
+									"// Test either type",
+									"channel.Type.forEach(function(x, i) {",
+									"    tests['Channel Type ' + i + x] = true === /^CONTINUOUS$|^GEOPHYSICAL$/i.test(channel.Type[i]); ",
+									"});",
+									"",
+									"tests['Channel SampleRate'] = Number(channel.SampleRate) === 100;",
+									"tests['Channel SampleRateRatio-NumberSamples'] = channel.SampleRateRatio.NumberSamples === \"100\";",
+									"tests['Channel SampleRateRatio-NumberSeconds'] = channel.SampleRateRatio.NumberSeconds === \"1\";",
+									"tests['Channel StorageFormat'] = channel.StorageFormat === \"Steim2\";",
+									"tests['Channel ClockDrift'] = Number(channel.ClockDrift) === 0.0001;",
+									"",
+									"var sensor = channel.Sensor;",
+									"tests['Sensor Id'] = sensor.$.resourceId === \"Sensor#LE-3DliteMkII:I-0652\"; //Type + # + Model + : SerialNumber",
+									"tests['Sensor Type'] = sensor.Type === \"Short Period Seismometer\";",
+									"tests['Sensor Install Date'] = sensor.InstallationDate === \"2010-03-11T21:16:00Z\";",
+									"",
+									"var logger = channel.DataLogger;",
+									"tests['Logger Id'] = logger.$.resourceId === \"Datalogger#Q330/3:3616\"; ",
+									"tests['Logger Type'] = logger.Type === \"Datalogger\";",
+									"tests['Logger Install Date'] = logger.InstallationDate === \"2012-01-19T22:30:01Z\";",
+									"",
+									"var instrument = channel.Response.InstrumentSensitivity;",
+									"tests['Instrument Value'] = Number(instrument.Value) === 1.6777216e+08;",
+									"tests['Instrument Frequency'] = Number(instrument.Frequency) === 15;",
+									"tests['Instrument input name'] = instrument.InputUnits.Name === \"m/s\";",
+									"tests['Instrument output name'] = instrument.OutputUnits.Name === \"count\";",
+									"",
+									"var stage1 = channel.Response.Stage[0]; //fortuntaly this applies",
+									"tests['PolesZeros resourceId'] =  stage1.PolesZeros.$.resourceId === \"PolesZeros#LE-3DliteMkII\";",
+									"tests['PolesZeros resourceId'] =  stage1.PolesZeros.$.name === \"ARHZ.10.EHE.2012.019.stage_1\";",
+									"tests['PolesZeros input name'] = stage1.PolesZeros.InputUnits.Name === \"m/s\";",
+									"tests['PolesZeros output name'] = stage1.PolesZeros.OutputUnits.Name === \"V\";",
+									"tests['PolesZeros PzTransferFunctionType'] = stage1.PolesZeros.PzTransferFunctionType === \"LAPLACE (RADIANS/SECOND)\";",
+									"tests['PolesZeros NormalizationFactor'] = Number(stage1.PolesZeros.NormalizationFactor) === 1.000075906294308;",
+									"tests['PolesZeros NormalizationFrequency'] = Number(stage1.PolesZeros.NormalizationFrequency) === 15;",
+									"",
+									"var zeros = stage1.PolesZeros.Zero;",
+									"var poles = stage1.PolesZeros.Pole;",
+									"console.log(poles[0].Real);",
+									"// Again these all seem in order",
+									"tests['Poles number 0'] = Number(poles[0].$.number) === 0;",
+									"tests['Poles Real 0'] = Number(poles[0].Real) === -4.444;",
+									"tests['Poles Imaginary 0'] = Number(poles[0].Imaginary) === 4.444;",
+									"tests['Poles number 1'] = Number(poles[1].$.number) === 1;",
+									"tests['Poles Real 1'] = Number(poles[1].Real) === -4.444;",
+									"tests['Poles Imaginary 1'] = Number(poles[1].Imaginary) === -4.444;",
+									"tests['Poles number 2'] = Number(poles[2].$.number) === 2;",
+									"tests['Poles Real 2'] = Number(poles[2].Real) === -1.083;",
+									"tests['Poles Imaginary 2'] = Number(poles[2].Imaginary) ===0;",
+									"",
+									"tests['Zeros number 3'] = Number(zeros[0].$.number) === 3;",
+									"tests['Zeros Real 3'] = Number(zeros[0].Real) === 0;",
+									"tests['Zeros Imaginary 3'] = Number(zeros[0].Imaginary) === 0;",
+									"tests['Zeros number 4'] = Number(zeros[1].$.number) === 4;",
+									"tests['Zeros Real 4'] = Number(zeros[1].Real) === 0;",
+									"tests['Zeros Imaginary 4'] = Number(zeros[1].Imaginary) === 0;",
+									"tests['Zeros number 5'] = Number(zeros[2].$.number) === 5;",
+									"tests['Zeros Real 5'] = Number(zeros[2].Real) === 0;",
+									"tests['Zeros Imaginary 5'] = Number(zeros[2].Imaginary) === 0;"
 								]
 							}
 						}
 					],
 					"request": {
 						"url": {
-							"raw": "{{fdsn_url}}/fdsnws/station/1/query?station=ARAZ&level=response",
+							"raw": "{{fdsn_url}}/fdsnws/station/1/query?station=ARHZ&channel=EHE&location=10&starttime=2012-01-20T22:30:01&level=response",
 							"host": [
 								"{{fdsn_url}}"
 							],
@@ -121,7 +252,25 @@
 							"query": [
 								{
 									"key": "station",
-									"value": "ARAZ",
+									"value": "ARHZ",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "channel",
+									"value": "EHE",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "location",
+									"value": "10",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "starttime",
+									"value": "2012-01-20T22:30:01",
 									"equals": true,
 									"description": ""
 								},
@@ -140,7 +289,310 @@
 							"mode": "raw",
 							"raw": ""
 						},
-						"description": "Get detailed repsonse for station ARAZ"
+						"description": "Get detailed repsonse for station ARHZ for a particular Channel as defined by the request. This is because you should not rely on and array of Channels to be in a particular order.\n\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Seismic Station high level response check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonObject = xml2Json(responseBody);",
+									"var station = jsonObject.FDSNStationXML.Network.Station;",
+									"",
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"// Test station meta data",
+									"tests['Test Station Code'] = station.$.code === 'ARHZ';",
+									"tests['Test Station Start Date'] = station.$.startDate === '2010-03-11T00:00:00';",
+									"tests['Test Station Latitude'] = station.Latitude._ === \"-39.2631\";",
+									"tests['Test Station Longitude'] = station.Longitude._ === \"176.9959\";",
+									"tests['Test Station Elevation'] = station.Elevation === \"270\";",
+									"",
+									"// Test Channels returned. There should be six.",
+									"tests[\"Check six channels returned\"] = station.Channel.length === 6;",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"url": {
+							"raw": "{{fdsn_url}}/fdsnws/station/1/query?station=ARHZ&level=response",
+							"host": [
+								"{{fdsn_url}}"
+							],
+							"path": [
+								"fdsnws",
+								"station",
+								"1",
+								"query"
+							],
+							"query": [
+								{
+									"key": "station",
+									"value": "ARHZ",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "level",
+									"value": "response",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "GET",
+						"header": [],
+						"body": {},
+						"description": "For station ARHZ"
+					},
+					"response": []
+				},
+				{
+					"name": "Tidal Sation high level",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonObject = xml2Json(responseBody);",
+									"var station = jsonObject.FDSNStationXML.Network.Station;",
+									"",
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"// Test station meta data",
+									"tests['Test Station Code'] = station.$.code === 'GBIT';",
+									"tests['Test Station Start Date'] = station.$.startDate === '2010-07-26T00:00:00';",
+									"tests['Test Station Latitude'] = station.Latitude._ === \"-36.1890459\";",
+									"tests['Test Station Longitude'] = station.Longitude._ === \"175.4888681\";",
+									"tests['Test Station Elevation'] = station.Elevation === \"-4\";",
+									"",
+									"// Test Channels returned. There should be six.",
+									"tests[\"Check six channels returned\"] = station.Channel.length === 12;",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"url": {
+							"raw": "{{fdsn_url}}/fdsnws/station/1/query?station=GBIT&level=response",
+							"host": [
+								"{{fdsn_url}}"
+							],
+							"path": [
+								"fdsnws",
+								"station",
+								"1",
+								"query"
+							],
+							"query": [
+								{
+									"key": "station",
+									"value": "GBIT",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "level",
+									"value": "response",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "GET",
+						"header": [],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Tidal Station specific channel response",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonObject = xml2Json(responseBody);",
+									"var station = jsonObject.FDSNStationXML.Network.Station;",
+									"//console.log(JSON.stringify(station));",
+									"",
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"// Test station meta data",
+									"tests['Station Code'] = station.$.code === 'GBIT';",
+									"",
+									"// Test Channel returned. There should only be one.",
+									"tests[\"Check only one channel is returned\"] = typeof(station.Channel) === 'object';",
+									"",
+									"var channel = station.Channel;",
+									"tests['Channel Code'] = channel.$.code === 'BTZ';",
+									"tests['Channel Start Date'] = channel.$.startDate === \"2010-07-26T00:00:00\";",
+									"tests['Channel Location Code'] = channel.$.locationCode === \"41\";",
+									"tests['Channel Azimuth'] = channel.Azimuth === \"0\";",
+									"tests['Channel Depth'] = channel.Depth === \"0\";",
+									"tests['Channel Dip'] = channel.Dip === \"0\";",
+									"",
+									"// Loosley test channel comments",
+									"tests['Channel number of Comments for Channel'] = channel.Comment.length = 3;",
+									"channel.Comment.forEach(function(x, i) {",
+									"    tests['Channel Comment for Channel ' + channel.Comment[i].Value ] = true === /Location|Sensor/.test( channel.Comment[i].Value );",
+									"});",
+									"",
+									"// Test either type",
+									"channel.Type.forEach(function(x, i) {",
+									"    tests['Channel Type ' + i + x] = true === /^CONTINUOUS$|^GEOPHYSICAL$/i.test(channel.Type[i]); ",
+									"});",
+									"",
+									"tests['Channel SampleRate'] = channel.SampleRate === \"10\";",
+									"tests['Channel SampleRateRatio-NumberSamples'] = channel.SampleRateRatio.NumberSamples === \"10\";",
+									"tests['Channel SampleRateRatio-NumberSeconds'] = channel.SampleRateRatio.NumberSeconds === \"1\";",
+									"tests['Channel StorageFormat'] = channel.StorageFormat === \"Steim2\";",
+									"tests['Channel ClockDrift'] = channel.ClockDrift === \"0.0001\";",
+									"",
+									"var sensor = channel.Sensor;",
+									"tests['Sensor Id'] = sensor.$.resourceId === \"Sensor#Druck PTX-1830:3126136\"; //Type + # + Model + : SerialNumber",
+									"tests['Sensor Type'] = sensor.Type === \"Pressure Sensor\";",
+									"tests['Sensor Install Date'] = sensor.InstallationDate === \"2010-07-26T00:00:00Z\";",
+									"",
+									"var logger = channel.DataLogger;",
+									"tests['Logger Id'] = logger.$.resourceId === \"Datalogger#Q330/3:2564\"; ",
+									"tests['Logger Type'] = logger.Type === \"Datalogger\";",
+									"tests['Logger Install Date'] = logger.InstallationDate === \"2010-05-09T00:00:01Z\";"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": {
+							"raw": "{{fdsn_url}}/fdsnws/station/1/query?station=GBIT&channel=BTZ&location=41&starttime=2010-01-20T22:30:01&level=response",
+							"host": [
+								"{{fdsn_url}}"
+							],
+							"path": [
+								"fdsnws",
+								"station",
+								"1",
+								"query"
+							],
+							"query": [
+								{
+									"key": "station",
+									"value": "GBIT",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "channel",
+									"value": "BTZ",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "location",
+									"value": "41",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "starttime",
+									"value": "2010-01-20T22:30:01",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "level",
+									"value": "response",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "GET",
+						"header": [],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Station startime endtime param check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonObject = xml2Json(responseBody);",
+									"var station = jsonObject.FDSNStationXML.Network.Station;",
+									"",
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"// Test station meta data",
+									"tests['Test Station Code'] = station.$.code === 'ARAZ';",
+									"",
+									"tests[\"Check three channels returned\"] = station.Channel.length === 3;"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": {
+							"raw": "{{fdsn_url}}/fdsnws/station/1/query?starttime=2007-06-20T04:00:01&endtime=2007-06-20T04:00:02&station=ARAZ&level=response",
+							"host": [
+								"{{fdsn_url}}"
+							],
+							"path": [
+								"fdsnws",
+								"station",
+								"1",
+								"query"
+							],
+							"query": [
+								{
+									"key": "starttime",
+									"value": "2007-06-20T04:00:01",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "endtime",
+									"value": "2007-06-20T04:00:02",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "station",
+									"value": "ARAZ",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "level",
+									"value": "response",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "GET",
+						"header": [],
+						"body": {},
+						"description": ""
 					},
 					"response": []
 				}
