@@ -12,7 +12,7 @@
 			"description": "",
 			"item": [
 				{
-					"name": "Event request to return multiple events based on parameters",
+					"name": "Return multiple events based on time",
 					"event": [
 						{
 							"listen": "test",
@@ -24,14 +24,14 @@
 									"tests[\"Status code is 200\"] = responseCode.code === 200;",
 									"",
 									"// The reason to hate XML?",
-									"tests['Events returned from query'] = jsonObject['q:quakeml'].eventParameters.event.length === 2;"
+									"tests['Events returned from query'] = jsonObject['q:quakeml'].eventParameters.event.length === 7;"
 								]
 							}
 						}
 					],
 					"request": {
 						"url": {
-							"raw": "{{fdsn_url}}/fdsnws/event/1/query?starttime=2016-11-19T11:00:00.000&endtime=2016-11-20T11:00:00.000&longitude=173.02&latitude=-42.69&minmagnitude=5",
+							"raw": "{{fdsn_url}}/fdsnws/event/1/query?starttime=2016-11-19T11:00:00.000&endtime=2016-11-19T11:15:00.000",
 							"host": [
 								"{{fdsn_url}}"
 							],
@@ -50,25 +50,7 @@
 								},
 								{
 									"key": "endtime",
-									"value": "2016-11-20T11:00:00.000",
-									"equals": true,
-									"description": ""
-								},
-								{
-									"key": "longitude",
-									"value": "173.02",
-									"equals": true,
-									"description": ""
-								},
-								{
-									"key": "latitude",
-									"value": "-42.69",
-									"equals": true,
-									"description": ""
-								},
-								{
-									"key": "minmagnitude",
-									"value": "5",
+									"value": "2016-11-19T11:15:00.000",
 									"equals": true,
 									"description": ""
 								}
@@ -83,7 +65,7 @@
 					"response": []
 				},
 				{
-					"name": "Event high level response check",
+					"name": "High level response check",
 					"event": [
 						{
 							"listen": "test",
@@ -119,6 +101,257 @@
 								{
 									"key": "eventId",
 									"value": "2016p875481",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "GET",
+						"header": [],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Return one event from specific parameters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonObject = xml2Json(responseBody);",
+									"",
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var e = jsonObject['q:quakeml'].eventParameters.event;",
+									"",
+									"tests['One Event returned from query'] = typeof(e) === 'object';",
+									"tests['Event publicID'] = e.$.publicID === 'smi:nz.org.geonet/2016p875481';",
+									"",
+									"tests['Amount of amplitude entities'] = e.amplitude.length === 34;",
+									"tests['Amount of stationMagnitude entities'] = e.stationMagnitude.length === 34;",
+									"",
+									"// Looks like elements are ordered specifically for arrays but don't rely on it. Find specefic",
+									"var myAmp;",
+									"var myStation;",
+									"e.amplitude.forEach(function(x) {",
+									"    if (x.$.publicID === 'smi:nz.org.geonet/Amplitude#20161119221842.329047.40638') { myAmp = x; }",
+									"} );",
+									"e.stationMagnitude.forEach(function(x) {",
+									"    if (x.$.publicID === 'smi:nz.org.geonet/StationMagnitude#20161120003141.316433.199630') { myStation = x; }",
+									"} );",
+									"",
+									"tests['Amplitude publicID'] = myAmp.$.publicID === 'smi:nz.org.geonet/Amplitude#20161119221842.329047.40638';",
+									"tests['Amplitude type'] = myAmp.type === 'MLv';",
+									"tests['Amplitude genericAmplitude'] = Number(myAmp.genericAmplitude.value) === 0.7176275522;",
+									"",
+									"tests['Amplitude timeWindow reference'] = new Date(myAmp.timeWindow.reference).getTime() === new Date('2016-11-19T22:18:08.688394Z').getTime();",
+									"tests['Amplitude timeWindow begin'] = Number(myAmp.timeWindow.begin) === -74.37;",
+									"tests['Amplitude timeWindow end'] = Number(myAmp.timeWindow.end) === 30.63;",
+									"tests['Amplitude snr'] = Number(myAmp.snr) === 6.783499005;",
+									"tests['Amplitude pickID'] = myAmp.pickID === 'smi:nz.org.geonet/20161119.221659.31-AIC-NZ.MARZ.10.EHZ';",
+									"",
+									"tests['Amplitude waveformID networkCode'] = myAmp.waveformID.$.networkCode === 'NZ';",
+									"tests['Amplitude waveformID stationCode'] = myAmp.waveformID.$.stationCode === 'MARZ';",
+									"tests['Amplitude waveformID locationCode'] = Number(myAmp.waveformID.$.locationCode) === 10;",
+									"tests['Amplitude waveformID channelCode'] = myAmp.waveformID.$.channelCode === 'EHZ';",
+									"",
+									"tests['Amplitude creationInfo agencyID'] = myAmp.creationInfo.agencyID === 'WEL(GNS_Primary)';",
+									"tests['Amplitude creationInfo author'] = myAmp.creationInfo.author === 'scamp@akeqp01.geonet.org.nz';",
+									"tests['Amplitude creationInfo creationTime'] = new Date(myAmp.creationInfo.creationTime).getTime() === new Date('2016-11-19T22:18:42.329159Z').getTime();",
+									"",
+									"tests['Station publicID'] = myStation.$.publicID === 'smi:nz.org.geonet/StationMagnitude#20161120003141.316433.199630';",
+									"",
+									"tests['Station originID'] = myStation.originID === 'smi:nz.org.geonet/Origin#20161120003115.425027.199547';",
+									"tests['Station mag value'] = Number(myStation.mag.value) === 4.922742195;",
+									"tests['Station type'] = myStation.type === 'MLv';",
+									"tests['Station amplitudeID'] = myStation.amplitudeID === 'smi:nz.org.geonet/Amplitude#20161119221842.329047.40638';",
+									"",
+									"tests['Station waveformID networkCode'] = myStation.waveformID.$.networkCode === 'NZ';",
+									"tests['Station waveformID stationCode'] = myStation.waveformID.$.stationCode === 'MARZ';",
+									"tests['Station waveformID locationCode'] = Number(myStation.waveformID.$.locationCode) === 10;",
+									"tests['Station waveformID channelCode'] = myStation.waveformID.$.channelCode === 'EHZ';",
+									"",
+									"tests['Station creationInfo agencyID'] = myStation.creationInfo.agencyID === 'WEL(GNS_Primary)';",
+									"tests['Station creationInfo author'] = myStation.creationInfo.author === 'salichon@akeqx01.geonet.org.nz';",
+									"tests['Station creationInfo creationTime'] = new Date(myStation.creationInfo.creationTime).getTime() === new Date('2016-11-20T00:31:41.316467Z').getTime();",
+									"",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"url": {
+							"raw": "{{fdsn_url}}/fdsnws/event/1/query?starttime=2016-11-19T11:00:00.000&endtime=2016-11-20T01:15:00.000&longitude=173.02&latitude=-42.69&minmagnitude=5",
+							"host": [
+								"{{fdsn_url}}"
+							],
+							"path": [
+								"fdsnws",
+								"event",
+								"1",
+								"query"
+							],
+							"query": [
+								{
+									"key": "starttime",
+									"value": "2016-11-19T11:00:00.000",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "endtime",
+									"value": "2016-11-20T01:15:00.000",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "longitude",
+									"value": "173.02",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "latitude",
+									"value": "-42.69",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "minmagnitude",
+									"value": "5",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "GET",
+						"header": [],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Return bad request for not supported parameter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 400\"] = responseCode.code === 400;",
+									"",
+									"tests[\"Body is correct\"] = responseBody === \"\\\"offset\\\" is not supported\";"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": {
+							"raw": "{{fdsn_url}}/fdsnws/event/1/query?offset=1&starttime=2016-11-20T10:00:00&endtime=2016-11-20T11:00:00",
+							"host": [
+								"{{fdsn_url}}"
+							],
+							"path": [
+								"fdsnws",
+								"event",
+								"1",
+								"query"
+							],
+							"query": [
+								{
+									"key": "offset",
+									"value": "1",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "starttime",
+									"value": "2016-11-20T10:00:00",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "endtime",
+									"value": "2016-11-20T11:00:00",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "GET",
+						"header": [],
+						"body": {},
+						"description": "Optional paramters that are not supported by Geonet FDSN event service"
+					},
+					"response": []
+				},
+				{
+					"name": "Return magnitude ascending",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonObject = xml2Json(responseBody);",
+									"",
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var events = jsonObject['q:quakeml'].eventParameters.event;",
+									"",
+									"// Get magntide element of type M for each event.",
+									"var arrMag = [];",
+									"events.forEach(function(e) {",
+									"    e.magnitude.forEach(function(x) {",
+									"        if (x.type === 'M') { arrMag.push(Number(x.mag.value)); }",
+									"    } );",
+									"} );",
+									"",
+									"// Check order of array is ascending",
+									"tests[\"Event 1 magnitude\"] = arrMag[3] === 3.133585191;",
+									"tests[\"Event 2 magnitude\"] = arrMag[2] === 2.858884534;",
+									"tests[\"Event 3 magnitude\"] = arrMag[1] === 2.26142606;",
+									"tests[\"Event 4 magnitude\"] = arrMag[0] === 1.89855632;"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": {
+							"raw": "{{fdsn_url}}/fdsnws/event/1/query?starttime=2016-11-20T10:45:00&endtime=2016-11-20T11:00:00&orderby=magnitude-asc",
+							"host": [
+								"{{fdsn_url}}"
+							],
+							"path": [
+								"fdsnws",
+								"event",
+								"1",
+								"query"
+							],
+							"query": [
+								{
+									"key": "starttime",
+									"value": "2016-11-20T10:45:00",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "endtime",
+									"value": "2016-11-20T11:00:00",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "orderby",
+									"value": "magnitude-asc",
 									"equals": true,
 									"description": ""
 								}
